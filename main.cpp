@@ -1,315 +1,180 @@
-#include <iterator>
-#include <initializer_list>
-#include <stdexcept>
+#include <iostream>
 
-class Vector {
+class Node {
 public:
-    struct Iterator {
-        using IteratorCategory = std::random_access_iterator_tag;
-        using DifferenceType = std::ptrdiff_t;
+    int data{};
+    Node* next;
+    Node* previous;
+    Node() : data(0), next(nullptr), previous(nullptr){};
+};
 
-        explicit Iterator(int* ptr) : m_ptr_(ptr){};
-        Iterator(const Iterator& rhs) : m_ptr_(rhs.m_ptr_) {
-        }
-
-        int& operator*() const {
-            return *m_ptr_;
-        };
-        int* operator->() {
-            return m_ptr_;
-        };
-
-        Iterator& operator++() {
-            m_ptr_++;
-            return *this;
-        }
-
-        Iterator operator++(int) {
-            auto help = m_ptr_;
-            m_ptr_++;
-            return Iterator(help);
-        }
-
-        Iterator& operator--() {
-            m_ptr_--;
-            return *this;
-        }
-
-        Iterator operator--(int) {
-            auto help = m_ptr_;
-            m_ptr_--;
-            return Iterator(help);
-        }
-
-        Iterator operator+(const DifferenceType& movement) {
-            return Iterator(m_ptr_ + movement);
-        };
-        Iterator operator-(const DifferenceType& movement) {
-            return Iterator(m_ptr_ - movement);
-        };
-
-        Iterator& operator+=(const DifferenceType& movement) {
-            *this = *this + movement;
-            return *this;
-        };
-        Iterator& operator-=(const DifferenceType& movement) {
-            *this = *this - movement;
-            return *this;
-        };
-
-        friend bool operator==(const Iterator& a, const Iterator& b) {
-            return a.m_ptr_ == b.m_ptr_;
-        };
-        friend bool operator!=(const Iterator& a, const Iterator& b) {
-            return !(a == b);
-        };
-        bool operator>(const Iterator& rhs) const {
-            return m_ptr_ > rhs.m_ptr_;
-        }
-        bool operator<(const Iterator& rhs) const {
-            return m_ptr_ < rhs.m_ptr_;
-        }
-        bool operator>=(const Iterator& rhs) const {
-            return m_ptr_ >= rhs.m_ptr_;
-        }
-        bool operator<=(const Iterator& rhs) const {
-            return m_ptr_ <= rhs.m_ptr_;
-        }
-
-    private:
-        int* m_ptr_;
-    };
-
-    Vector() : size_(0), capacity_(10), arr_(new int[capacity_]){};
-
-    explicit Vector(size_t n_size)
-        : size_(n_size), capacity_(2 * n_size), arr_(new int[capacity_]){};
-
-    Vector(const int* vals, size_t n_size)
-        : size_(n_size), capacity_(2 * n_size), arr_(new int[capacity_]) {
-        for (size_t i = 0; i < size_; i++) {
-            arr_[i] = vals[i];
-        }
-    };
-
-    Vector(const Vector& vec)
-        : size_(vec.size_), capacity_(vec.capacity_), arr_(new int[capacity_]) {
-        for (size_t i = 0; i < size_; i++) {
-            arr_[i] = vec.arr_[i];
-        }
-    };
-
-    Vector(std::initializer_list<int> vals)
-        : size_(vals.size()), capacity_(vals.size() * 2), arr_(new int[capacity_]) {
-        for (size_t i = 0; i < size_; i++) {
-            arr_[i] = *(vals.begin() + i);
-        }
-    };
-
-    ~Vector() {
-        delete[] arr_;
-    };
-
-    size_t getSize() const {
-        return size_;
-    };
-
-    size_t getCapacity() const {
-        return capacity_;
-    };
-
-    bool isEmpty() const {
-        return size_ == 0;
-    };
-
-    void reserve(size_t n) {
-        if (n <= capacity_) {
+class List {
+public:
+    List() : size(0), head(nullptr), tail(nullptr){};
+    List(int* values, size_t usize) : size(usize){
+        if (size == 0) {
+            head = tail = nullptr;
             return;
         }
-        int* newarr = new int[n];
-        for (size_t i = 0; i < size_; i++) {
-            newarr[i] = arr_[i];
+        if (std::abs(values[0]) > 2000000000 || std::abs(values[size - 1]) > 2000000000) {
+            throw std::runtime_error("Wrong Value!");
         }
-        delete[] arr_;
-        arr_ = newarr;
-        capacity_ = n;
-    }
-    void resize(size_t n_size) {
-        if (n_size >= capacity_) {
-            reserve(2 * n_size);
+        if (size == 1) {
+            Node* newn = new Node();
+            newn->data = values[0];
+            head = tail = newn;
+            head->previous = tail;
+            tail->next = head;
+            return;
         }
-        if (n_size > size_) {
-            for (auto i = size_; i < n_size; i++) {
-                pushBack(0);
+        Node* newn = new Node();
+        newn->data = values[0];
+        head = newn;
+        Node* current_node = head;
+        for (size_t i = 1; i < size - 1; ++i) {
+            if (std::abs(values[i]) > 2000000000) {
+                throw std::runtime_error("Wrong Value!");
             }
+            newn = new Node();
+            newn->data = values[i];
+            std::cout << newn->data << '\n';
+            current_node->next = newn;
+            newn->previous = current_node;
+            current_node = current_node->next;
         }
-        if (n_size < size_) {
-            while (size_ != n_size) {
-                popBack();
-            }
+        newn = new Node();
+        newn->data = values[size - 1];
+        tail = newn;
+        tail->previous = current_node;
+        current_node->next = tail;
+        if (size != 0) {
+            head->previous = tail;
+            tail->next = head;
+        }
+    };
+    ~List() {
+        if (size == 0) {
+            return;
+        }
+        Node* current_node = head;
+        while (size != 0) {
+            Node* next_node = current_node->next;
+            delete current_node;
+            current_node = next_node;
+            --size;
         }
     };
 
     void pushBack(int value) {
-        if (capacity_ == size_) {
-            reserve(2 * size_);
+        if (std::abs(value) > 2000000000) {
+            throw std::runtime_error("Wrong Value!");
         }
-        arr_[size_] = value;
-        ++size_;
-    };
-
-    void popBack() {
-        if (size_ == 0) {
-            throw std::runtime_error("Empty Array!");
+        Node* newn = new Node;
+        newn->data = value;
+        if (size != 0) {
+            newn->previous = tail;
+            tail->next = newn;
+            tail = newn;
+        } else {
+            head = tail = newn;
         }
-        --size_;
-        arr_[size_] = 0;
+        head->previous = tail;
+        tail->next = head;
+        ++size;
     };
-
-    void clear() {
-        size_ = 0;
-        delete[] arr_;
-        arr_ = new int[capacity_];
+    void pushFront(int value) {
+        if (std::abs(value) > 2000000000) {
+            throw std::runtime_error("Wrong Value!");
+        }
+        Node* newn = new Node();
+        newn->data = value;
+        if (size != 0) {
+            head->previous = newn;
+            newn->next = head;
+            newn->previous = tail;
+            head = newn;
+        } else {
+            head = tail = newn;
+            head->previous = tail;
+        }
+        tail->next = head;
+        ++size;
+    }
+    int pop() {
+        if (size == 0) {
+            throw std::runtime_error("Can not pop such element!");
+        }
+        Node* del = head;
+        int ret = head->data;
+        if (size == 1) {
+            head = nullptr;
+            tail = nullptr;
+        } else {
+            head->next->previous = tail;
+            tail->next = head->next;
+            head = head->next;
+        }
+        delete del;
+        --size;
+        return ret;
     };
-
-    void insert(size_t pos, int value) {
-        if (pos > size_) {
+    int pop(size_t position) {
+        if (position > size - 2 || size < 2) {
             throw std::runtime_error("Wrong Position!");
         }
-        if (size_ == capacity_) {
-            reserve(2 * size_);
+        int ret;
+        Node* del = head->next;
+        for (size_t i = 0; i < position; i++) {
+            del = del->next;
         }
-        int* newarr = new int[capacity_];
-        for (size_t i = 0; i != pos; i++) {
-            newarr[i] = arr_[i];
+        del->next->previous = del->previous;
+        del->previous->next = del->next;
+        if (position == size - 2) {
+            tail = del->previous;
         }
-        newarr[pos] = value;
-        ++size_;
-        for (auto i = pos + 1; i != size_; i++) {
-            newarr[i] = arr_[i - 1];
-        }
-        delete[] arr_;
-        arr_ = newarr;
+        tail->next = head;
+        head->previous = tail;
+        ret = del->data;
+        --size;
+        delete del;
+        return ret;
     };
-
-    void erase(size_t pos) {
-        if (isEmpty()) {
-            throw std::runtime_error("Empty Array!");
+    void push(int value, size_t position) {
+        if (std::abs(value) > 2000000000) {
+            throw std::runtime_error("Wrong Value!");
         }
-        if (pos >= size_) {
+        if (position > size - 1) {
             throw std::runtime_error("Wrong Position!");
         }
-        for (auto i = pos; i != size_; ++i) {
-            arr_[i] = arr_[i + 1];
+        Node* cur = head;
+        Node* add = new Node();
+        add->data = value;
+        for (size_t i = 0; i < position; ++i) {
+            cur = cur->next;
         }
-        popBack();
-    };
-
-    int at(size_t pos) {
-        if (pos >= size_) {
-            throw std::runtime_error("Wrong Position!");
+        add->previous = cur;
+        add->next = cur->next;
+        cur->next->previous = add;
+        cur->next = add;
+        if (position == size - 1) {
+            tail = add;
         }
-        return arr_[pos];
+        ++size;
     };
-
-    int front() {
-        if (isEmpty()) {
-            throw std::runtime_error("Empty Array!");
-        }
-        return arr_[0];
-    };
-
-    int back() {
-        if (isEmpty()) {
-            throw std::runtime_error("Empty Array!");
-        }
-        return arr_[size_ - 1];
-    };
-
-    Iterator begin() {
-        return Iterator(&arr_[0]);
-    };
-
-    Iterator end() {
-        return Iterator(&arr_[size_]);
-    };
-
-    int& operator[](size_t pos) const {
-        if (pos >= size_) {
-            throw std::runtime_error("Wrong Position!");
-        }
-        return arr_[pos];
-    };
-
-    Vector& operator=(const Vector& other) {
-        resize(other.size_);
-        reserve(other.capacity_);
-        for (size_t i = 0; i < other.size_; i++) {
-            arr_[i] = other.arr_[i];
-        }
-        return *this;
-    };
-
-private:
-    size_t size_;
-    size_t capacity_;
-    int* arr_ = nullptr;
+    size_t size = 0;
+    Node* head{};
+    Node* tail{};
 };
 
-Vector merge(const Vector::Iterator begin, Vector::Iterator mid1, const Vector::Iterator end) {
-    Vector v;
-    Vector::Iterator it_l{begin}, it_r{mid1};
-    Vector::Iterator it_mid{mid1}, it_end{end};
-    while (it_l != it_mid && it_r != it_end) {
-        if (*it_l < *it_r) {
-            v.pushBack(*it_l);
-            ++it_l;
-        } else {
-            v.pushBack(*it_r);
-            ++it_r;
-        }
-    }
-    while (it_l != it_mid) {
-        v.pushBack(*it_l);
-        ++it_l;
-    }
-    while (it_r != it_end) {
-        v.pushBack(*it_r);
-        ++it_r;
-    }
-    return v;
-}
-
-void mergeSort(Vector::Iterator begin, Vector::Iterator end) {
-    auto i = begin;
-    auto j = end;
-    int32_t k = 0;
-    while (i != j) {
-        ++i;
-        ++k;
-    }
-    if (k <= 1) {
-        return;
-    }
-    Vector::Iterator middle = begin;
-    for (int32_t a = 0; a < k / 2; a++) {
-        ++middle;
-    }
-    mergeSort(begin, middle);
-    mergeSort(middle, end);
-    auto&& v = merge(begin, middle, end);
-    for (auto i = v.begin(); i != v.end(); ++i) {
-        *begin = *i;
-        ++begin;
-    }
-}
-void insertionSort(Vector::Iterator first, Vector::Iterator last) {
-    if (!(first < last)) {
-        return;
-    }
-    for (Vector::Iterator i = first + 1; i != last; ++i) {
-        for (Vector::Iterator j = i; j != first && *j < *(j - 1); --j) {
-            std::iter_swap(j - 1, j);
-        }
+int main() {
+    int* b = new int[10] {1,2,3,4,5,6,7,8,9,10};
+    List a;
+    //std::cout<<a.tail->next->data << a.head->previous->data;
+    List c(b,1);
+    c.push(2,0);
+    auto cur = c.tail;
+    for(int i = 0; i < c.size; i++) {
+        std::cout << cur->data << ' ';
+        cur = cur->previous;
     }
 }
